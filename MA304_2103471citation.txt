@@ -1,0 +1,29 @@
+Citation
+
+[r - Understanding the Basics of Markdown and Knitr - Stack Overflow](https://stackoverflow.com/questions/66846250/understanding-the-basics-of-markdown-and-knitr)
+
+[Create Maps in R using Base Plotting, Lattice, ggplot2, GoogleVis and rChart (rstudio-pubs-static.s3.amazonaws.com)](https://rstudio-pubs-static.s3.amazonaws.com/79029_b56eaffe36ef44f29b8efc0a07d67208.html)
+
+<https://stackoverflow.com/questions/65233613/plot-a-map-using-lat-and-long-with->[r](https://stackoverflow.com/questions/65233613/plot-a-map-using-lat-and-long-with-r)
+
+[https://www.ons.gov.uk/peoplepopulationandcommunity/wellbeing/datasets/measuringnationalwellbeinghappiness](ttps://www.ons.gov.uk/peoplepopulationandcommunity/wellbeing/datasets/measuringnationalwellbeinghappiness) (1)
+
+[https://www.geeksforgeeks.org/violin-plot-for-data-analysis/](ttps://www.geeksforgeeks.org/violin-plot-for-data-analysis/)
+
+@article{ggmap, title = {ggmap: Spatial Visualization with ggplot2}, author = {Kahle, David and Wickham, Hadley}, year = {2013}, date = {2013}, volume = {5}, url = {<https://journal.r-project.org/archive/2013-1/kahle-wickham.pdf>} }
+
+@article{ggplot2, title = {ggplot2: Elegant Graphics for Data Analysis}, author = {Wickham, Hadley}, year = {2016}, date = {2016}, url = {<https://ggplot2.tidyverse.org>} }
+
+@article{ggvis, title = {ggvis: Interactive Grammar of Graphics}, author = {Wickham, Hadley and Chang, Winston}, year = {2024}, date = {2024}, url = {<https://ggvis.rstudio.com/>} }
+
+@article{readr, title = {readr: Read Rectangular Text Data}, author = {Wickham, Hadley and Hester, Jim and Bryan, Jennifer}, year = {2024}, date = {2024}, url = {<https://readr.tidyverse.org>} }
+
+@article{tidyr, title = {tidyr: Tidy Messy Data}, author = {Wickham, Hadley and Vaughan, Davis and Girlich, Maximilian}, year = {2024}, date = {2024}, url = {<https://tidyr.tidyverse.org>} }
+
+@article{lattice, title = {Lattice: Multivariate Data Visualization with R}, author = {Sarkar, Deepayan}, year = {2008}, date = {2008}, url = {<http://lmdvr.r-forge.r-project.org>} }
+
+@article{dplyr, title = {dplyr: A Grammar of Data Manipulation}, author = {Wickham, Hadley and {François}, Romain and Henry, Lionel and {Müller}, Kirill and Vaughan, Davis}, year = {2023}, date = {2023}, url = {<https://dplyr.tidyverse.org>} }
+
+@article{leaflet, title = {leaflet: Create Interactive Web Maps with the JavaScript 'Leaflet' Library}, author = {Cheng, Joe and Schloerke, Barret and Karambelkar, Bhaskar and Xie, Yihui}, year = {2024}, date = {2024}, url = {<https://rstudio.github.io/leaflet/>} }
+
+@article{readxl, title = {readxl: Read Excel Files}, author = {Wickham, Hadley and Bryan, Jennifer}, year = {2023}, date = {2023}, url = {<https://readxl.tidyverse.org>} }
