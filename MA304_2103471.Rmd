@@ -1,0 +1,422 @@
+---
+title: "MA3046SP Coursework"
+author: "Ifeoluwa Babatunde - PB21690 - Registration Number: 2103471"
+date: "2024-04-19"
+output:
+  html_document: default
+---
+
+# Installing Required Packages
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+install.packages(c("ggplot2", "dplyr", "tidyr", "ggvis", "ggmap", "lattice", "caret","readr","readxl","leaflet"))
+library("ggplot2") 
+library("dplyr") 
+library("tidyr") 
+library("ggvis") 
+library("ggmap") 
+library("lattice") 
+library("caret")
+library("readr")
+library("readxl")
+library("leaflet")
+```
+
+# Inputting Both Data sets
+
+```{r pressure, echo=FALSE}
+#loading the excel files by setting the working directory and them importing
+
+crime23 <- read_csv("crime23.csv")
+#remove all NA figures for crime excel file to format data better
+crime23 <- crime23[!is.na(crime23$category), ]
+temp2023 <- read_csv("temp2023.csv")
+summary(pressure)
+```
+
+# How common is crime?
+
+```{r crime, echo=FALSE}
+#creating table listing all and giving a count of all the crimes to illustrate with simplicity what crime occurs the most comparatively in table to all possible crimes
+p = sort(table(crime23$category), decreasing = TRUE)[1:14]
+knitr::kable(p, caption = "List of All Criminal Offences", col.names = c("Type Of Crime","Frequency"))
+```
+
+From the table it's staggering that by a long margin (of 1956 more offences) that violent crime is the most prevalent crime within Colchester, meaning that there is a lot of work to be done to combat this to make Colchester a much safer place. The next most common type of crime is anti-social-behaviour (ASBO) which can be expected given how 'vague' the charge can be. This signals that crime is very rampant in Colchester and would make it unsafe for denizens of Colchester; whereas criminality would be very much encouraged if any potential perpetrator were to look at these statistics.
+
+# Crime Outcomes
+
+```{r bar, echo=FALSE}
+#Visualised bar plot for outcomes of each crime  
+ggplot(crime23, aes(x = crime23$category, fill = crime23$outcome_status)) +
+geom_bar() +
+theme_minimal() +
+labs(x = "Category of Crime", y = "Frequency", fill = "Outcome Status") +
+ggtitle("Comparison of Category and Outcome Status of Crimes")
+```
+
+having removed NA as it isn't descript of the outcomes we want to know of criminal cases raised it is gives further evidence that Colchester Police has a serious issue on their hands, not only is violent crime the most prevalent crime in Colchester but it's also the crime that visually is least likely to result in the suspect being prosecuted. Furthermore this trend of the suspect prosecution is across for all intents and purposes all types of crimes...that is of course they can even identify a suspect
+
+# Crime Outcomes cont.
+
+```{r bar1, echo=FALSE}
+#outcomes of offences for each crime visualised as percentages  
+library(dplyr)
+library(ggplot2)
+
+crime23pcent <- crime23 %>%
+  group_by(category, outcome_status) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count / sum(count) * 100)
+
+ggplot(crime23pcent, aes(x = category, y = count, fill = outcome_status)) +
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(aes(label = paste0(sprintf("%.1f", percentage), "%")), 
+            position = position_stack(vjust = 0.5), 
+            size = 1) +
+  theme_minimal() +
+  labs(x = "Category of Crime", y = "Percentage of Outcome Status for Each crime (in %)", fill = "Outcome Status") +
+  ggtitle("Comparison of Category and Outcome Status of Crimes")
+```
+
+To give a frame of reference the outcomes have been changed from a visual interpretation which induce a margin of error to categorically stating the percentages of the outcomes per each crime, which only further give credence to the rhetoric in the prior chunk.
+
+# Where to Start?
+
+Before advising Colchester Police what to do, we need to identify where crime is most rampant within Colchester - to do that Colchester has been split into 4 different quadrants and hopefully this can help Colchester Police direct their efforts. Assuming Colchester Police department may have a tight budget or not have the manpower, if they know where a large proportion of these crimes were occurring they can fit that quadrant with more CCTV to allow them to identify suspects or create conclusive evidence to put these suspects away; alternatively they can take preventative measures by placing more detective constables in those quadrants to deter criminals from committing violent acts - hopefully reducing the count of these crimes taking place
+
+```{r map, echo=FALSE}
+#Place the crimes onto a map to display a visualisation of where each crimes are taking place
+  crime_map <- leaflet(crime23) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,  # Adjust the radius as needed
+    popup = ~paste("Street Name:", street_name),
+    label = ~paste("Street Name:", street_name),
+    color = "red",
+    fillOpacity = 0.8
+  ) %>%
+  addLegend("bottomright", colors = "red", labels = "Crime Locations")
+
+
+# Create four quadrants based on latitude and longitude
+min_long <- min(crime23$long)
+max_long <- max(crime23$long)
+min_lat <- min(crime23$lat)
+max_lat <- max(crime23$lat)
+
+mid_long <- (min_long + max_long) / 2
+mid_lat <- (min_lat + max_lat) / 2
+
+# Create leaflet map
+crime_map <- leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,  # Adjust the radius as needed
+    popup = ~paste("Street Name:", street_name," ||  ",
+                   "Category:", category),
+    label = ~paste("Street Name:", street_name," ||   ",
+                   "Category:", category),
+    color = "red",
+    fillOpacity = 0.4,
+    data = crime23
+  ) %>%
+  addLayersControl(
+    overlayGroups = c("Quadrant 1", "Quadrant 2", "Quadrant 3", "Quadrant 4"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addLegend("bottomright", colors = "red", labels = "Crime Locations")
+
+# Split the map into quadrants
+quadrant1 <- subset(crime23, long <= mid_long & lat >= mid_lat)
+quadrant2 <- subset(crime23, long > mid_long & lat >= mid_lat)
+quadrant3 <- subset(crime23, long <= mid_long & lat < mid_lat)
+quadrant4 <- subset(crime23, long > mid_long & lat < mid_lat)
+
+# Add quadrants to the map
+crime_map <- crime_map %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,
+    color = "blue",
+    fillOpacity = 0.4,
+    data = quadrant1,
+    group = "Quadrant 1"
+  ) %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,
+    color = "green",
+    fillOpacity = 0.4,
+    data = quadrant2,
+    group = "Quadrant 2"
+  ) %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,
+    color = "orange",
+    fillOpacity = 0.4,
+    data = quadrant3,
+    group = "Quadrant 3"
+  ) %>%
+  addCircleMarkers(
+    ~long, ~lat,
+    radius = 3,
+    color = "purple",
+    fillOpacity = 0.4,
+    data = quadrant4,
+    group = "Quadrant 4"
+  )
+
+# Display the map
+crime_map
+
+quadrant1_counts <- quadrant1 %>% 
+  group_by(category) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+quadrant2_counts <- quadrant2 %>% 
+  group_by(category) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+quadrant3_counts <- quadrant3 %>% 
+  group_by(category) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+quadrant4_counts <- quadrant4 %>% 
+  group_by(category) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+# Get the most common crime in each quadrant
+most_common_crime_quadrant1 <- quadrant1_counts$category[1]
+most_common_crime_quadrant2 <- quadrant2_counts$category[1]
+most_common_crime_quadrant3 <- quadrant3_counts$category[1]
+most_common_crime_quadrant4 <- quadrant4_counts$category[1]
+
+
+cat("Most common crime in Quadrant 1:", most_common_crime_quadrant1, "\n")
+cat("Most common crime in Quadrant 2:", most_common_crime_quadrant2, "\n")
+cat("Most common crime in Quadrant 3:", most_common_crime_quadrant3, "\n")
+cat("Most common crime in Quadrant 4:", most_common_crime_quadrant4, "\n")
+```
+
+As shown majority of crimes within Colchester occur in the Southwards (South of Colchester) towards the direction of Wivenhoe/Chelmsford rather than towards Suffolk towards the direction of Manningtree and Ipswich. With Quadrants 3 and 4 holding the lions share of crimes being committed. So if Colchester Police placed a greater emphasis on these quadrants they can begin to tackle the crime problem within Colchester. As expected the most common crime is Violent Crime. This would give a good foundation for Colchester police to reduce crime as they would first target the most trouble sector and also the most troubling crime, making their efforts a lot more efficient as well.
+
+# Can the sun please shine?
+
+Typically the more sunshine there is the clearer the day tends to be because if there is more light your eyes will naturally be able to see things better and thus things become more visible, but how important is sunlight in making things visible?
+
+```{r scatter, echo=FALSE}
+#A scatter plot between amount of sunlight in hours and and visibility measured in KM with a line of best fit to ascertain a relationship
+ggplot(temp2023, aes(x = temp2023$SunD1h, y = temp2023$VisKm)) +
+  geom_point(color = "blue") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") + #
+  labs(x = "Amount of Sunlight in Hours", y = "Visibility (km)",  title = "Relationship between Hours of Sunlight and Visibility") +
+  theme_minimal()
+
+```
+
+There is very weak positive relationship between the amount of sunlight in hours a day and how visible the day would be. The line of best fit cannot conclusively prove with enough evidence that the more sunlight there is the more visible the day would be contrary to logic you would naturally assume in the original hypothesis.
+
+# How bipolar is English weather?
+
+We have all heard the age old adage "English Weather is Bipolar" is that just a fallacy or is there any truth to it? To find out a violin plot has been constructed to look at the historical peaks, troughs and averages of the Temperature to see the how the averages and extremes are distributed based off the density by the 'chunkiest' part of each violin plot.
+
+```{r violin, echo=FALSE}
+temp_long <- reshape2::melt(temp2023, measure.vars = c("TemperatureCAvg", "TemperatureCMax", "TemperatureCMin"))
+
+#violin plot
+ggplot(temp_long, aes(x = variable, y = value)) +
+  geom_violin() +
+  labs(x = "Type of Temperature Reading", y = "Temperature (°C)") +
+  theme_minimal()
+```
+
+From the results at least we can conclude that English weather is consistently cold, with majority of the density being condensed around the midpoint and tailing out either side (with more of a skewed distribution towards the top range) meaning the base is warmer more often than not of the extreme cold temperatures we could possibly have. Looking at the maximum temperature violin plot, it can be argued that it is the closest thing to a normal distribution between the 3 types of temperature readings though there would be a skew towards the lower tail end of the distribution making it more of an amalgam of a chi-squared distribution and normal distribution. But the average has a high density at around 10 degrees then tailing and then being densely packed at around the 18 degrees Celsius region meaning that more often than not the average temperature will either be around approximately 10 degrees or 18 degrees. Which is unusual considering the average is a midpoint between the max and minimum so there should be some resemblance as it would be correlated to both.
+
+# Can we predict what English weather has for us?
+
+Based off the average temperature we experience is there a way in which we can see how impactful all other weather factors are in deciding the average temperature and going forward if we can adjust/expect changes to these other weather factors what would that mean for the average temperature
+
+```{r regression, echo=FALSE}
+###regression analysis to see if how impactful regressors are 
+model <- lm(temp2023$TemperatureCAvg ~ temp2023$TemperatureCMax + temp2023$TemperatureCMin + temp2023$TdAvgC + 
+              temp2023$HrAvg + temp2023$WindkmhInt + temp2023$WindkmhGust + temp2023$PresslevHp
+            + temp2023$Precmm + temp2023$TotClOct + temp2023$SunD1h + temp2023$VisKm, data = temp2023)
+summary(model)
+```
+
+No surprises that maximum is statistically significant at the 1% level - it's almost inherently implied that they would be the one of the most important figures as averages are typically calculated as the midpoint between it and the minimum temperature; that being said the minimum temperature is not significant at all which seems counter-intuitive. But this was alluded to in prior visualisations (violin plot) where there was a lack of semblance between the average temperature and minimum temperature in the constitution of the violin plot itself. There are some other key findings within the analysis that are also interesting with TdAvgC, HrAvg and VisKm all being significant at the 0% level - making those variables as paramount as the maximum temperature to determine the average temperature. With other figures such as PresslevHp nd Precmm and SunD1h being significant 0.1% and 1% levels respectively.
+
+# Which way will the wind blow next?
+
+Focusing on the topic of cyclicality, is there a predictive trend on a month by month basis for England so we know where the winds are blowing most commonly and what this would mean forecasting in the future?
+
+```{r timeseriesplot, echo=FALSE}
+#format the date into YYYY-MM for functionality of the code
+temp2023d <- temp2023
+temp2023d$Date <-substr(temp2023d$Date, 1, 7)
+temp2023d <-temp2023d %>% 
+  rename(date = Date)
+## Time series plot for counts of which direction the wind has blown
+ggplot(temp2023d, aes(x = temp2023d$date, group = temp2023d$WindkmhDir, color = temp2023d$WindkmhDir)) +
+geom_line(stat = "count") +
+labs(x = "date", y = "Count of Wind Direction", color = "Wind Direction") +
+theme_minimal() +
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+This time series plot is very inconclusive due to the variation for each categorisation of observation of wind direction. This times series plot essentially means the wind can be blowing in any direction in the following month - it appears to be THAT sporadic.
+
+# 
+
+Conclusion
+
+Ultimately, the two takeaways based off the visualisations are very cynical and very bleak takeaways: British weather stereotypes of unpredictability are true and Colchester is a very unsafe place to live in.
+
+British weather based off all plots and evidence seemingly defies conventional logic and what one would could common sense, you cannot predict anything because change occurs too quickly and there are too many noticeable trends in one time period as seen by the time series plot of wind direction. Additionally there isn't any concrete basis to make any assumptions on that fits within scientific or mathematical explanations as shown by the regression analysis and scatter plots.
+
+Unlike Colchester, Colchester has reoccurring patterns that through the use of data can help with creating a roadmap into how to tackle issues that have arisen by analysising the quadrants and which crimes are most common in any method/area you try to analyse. There are the same issues cropping up of violent crime; whilst this is less than desirable, at least one can begin to change the issue based off the evidence visualised.
+
+# Library
+
+Library/glossary to give explanations of what each variable means
+
+## Temp2023 CSV
+
+**interval**
+
+:   'daily' or 'hourly' dataset to retrieve - given as character
+
+**date**
+
+:   start and finish date (e.g., date = c("2018-05-01", "2018-07-01")) - character or Date class object. If not provided last 30 days are used.
+
+**coords**
+
+:   add geographical coordinates of the station (logical value TRUE or FALSE)
+
+**station**
+
+:   WMO ID of meteorological station(s). Character or numeric vector
+
+**precip_split**
+
+:   whether to split precipitation fields into 6/12/24h
+
+**allow_failure**
+
+:   logical - whether to proceed or stop on failure. By default set to TRUE (i.e. don't stop on error). For debugging purposes change to FALSE numeric fields (logical value TRUE (default) or FALSE); valid only for hourly time step
+
+1.  station_ID - WMO station identifier
+
+2.  Lon - longitude
+
+3.  Lat - latitude
+
+4.  Date - date (and time) of observations
+
+5.  TC - air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+6.  TdC - dew point temperature at 2 metres above ground level. Values given in Celsius degrees
+
+7.  TmaxC - maximum air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+8.  TminC - minimum air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+9.  ddd - wind direction
+
+10. ffkmh - wind speed in km/h
+
+11. Gustkmh - wind gust in km/h
+
+12. P0hpa - air pressure at elevation of the station in hPa
+
+13. PseahPa - sea level pressure in hPa
+
+14. PTnd - pressure tendency in hPa
+
+15. Nt - total cloud cover
+
+16. Nh - cloud cover by high-level cloud fraction
+
+17. HKm - height of cloud base
+
+18. InsoD1 - insolation in hours
+
+19. Viskm - visibility in kilometres
+
+20. Snowcm - depth of snow cover in centimetres
+
+21. pr6 - precicipitation totals in 6 hours
+
+22. pr12 - precicipitation totals in 12 hours
+
+23. pr24 - precicipitation totals in 24 hours
+
+24. TemperatureCAvg - average air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+25. TemperatureCMax - maximum air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+26. TemperatureCMin - minimum air temperature at 2 metres above ground level. Values given in Celsius degrees
+
+27. TdAvgC - average dew point temperature at 2 metres above ground level. Values given in Celsius degrees
+
+28. HrAvg - average relative humidity. Values given in %
+
+29. WindkmhDir - wind direction
+
+30. WindkmhInt - wind speed in km/h
+
+31. WindkmhGust - wind gust in km/h
+
+32. PresslevHp - Sea level pressure in hPa
+
+33. Precmm - precipitation totals in mm
+
+34. TotClOct - total cloudiness in octants
+
+35. lowClOct - cloudiness by low level clouds in octants
+
+36. SunD1h - sunshine duration in hours
+
+37. PreselevHp - atmospheric pressure measured at altitude of station in hPa
+
+38. SnowDepcm - depth of snow cover in centimetres
+
+Source: [Scrapping meteorological (Synop) data from the Ogimet webpage --- meteo_ogimet • climate (bczernecki.github.io)](https://bczernecki.github.io/climate/reference/meteo_ogimet.html)
+
+## Crime23 CSV
+
+-   category: Category of the crime (<https://data.police.uk/docs/method/crime-street/>)
+
+-   persistent_id: 64-character unique identifier for that crime. (This is different to the existing 'id' attribute, which is not guaranteed to always stay the same for each crime.)
+
+-   date: Date of the crime YYYY-MM
+
+-   latitude: Latitude
+
+-   longitude: Longitude
+
+-   street_id: Unique identifier for the street
+
+-   street_name: Name of the location. This is only an approximation of where the crime happened
+
+-   context: Extra information about the crime (if applicable)
+
+-   id: ID of the crime. This ID only relates to the API, it is NOT a police identifier
+
+-   location_type: The type of the location. Either Force or BTP: Force indicates a normal police force location; BTP indicates a British Transport Police location. BTP locations fall within normal police force boundaries.
+
+-   location_subtype: For BTP locations, the type of location at which this crime was recorded.
+
+-   outcome_status: The category and date of the latest recorded outcome for the crime
+
+Source: [Find street level crime within a specified distance or area --- ukp_crime • ukpolice (njtierney.com)](https://ukpolice.njtierney.com/reference/ukp_crime.html)
